@@ -1,3 +1,72 @@
+/* ── Google Font ─────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ── CSS custom properties for easy theme switching ──── */
+:root {
+  --color-brand-500: #f97316;
+  --color-brand-600: #ea580c;
+  --color-brand-700: #c2410c;
+  --color-navy-900:  #0f172a;
+  --color-surface:   #faf8f5;
+  --color-surface-card: #ffffff;
+  --color-error:     #dc2626;
+  --color-success:   #16a34a;
+  --spacing-unit:    8px;       /* 8px grid system */
+}
+
+/* ── Base resets ─────────────────────────────────────── */
+@layer base {
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+    background-color: var(--color-surface);
+    color: #1e293b;
+  }
+
+  /* Respect reduced motion preference */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+/* ── Shared component styles ─────────────────────────── */
+@layer components {
+  /* Form input base style — 8px grid spacing */
+  .input-base {
+    @apply w-full rounded-lg border border-gray-300 bg-white px-4 py-3
+           text-sm text-gray-900 placeholder-gray-400
+           transition-colors duration-150
+           focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20;
+  }
+
+  .input-error {
+    @apply border-red-500 focus:border-red-500 focus:ring-red-500/20;
+  }
+
+  .label-base {
+    @apply mb-1 block text-sm font-medium text-gray-700;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg
+           bg-brand-500 px-6 py-3 text-sm font-semibold text-white
+           transition-all duration-200
+           hover:bg-brand-600 active:scale-[0.98]
+           disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg
+           border border-gray-300 bg-white px-6 py-3 text-sm font-semibold text-gray-700
+           transition-all duration-200
+           hover:bg-gray-50 active:scale-[0.98];
+  }
+}
