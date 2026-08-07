@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import StatusBadge from '../components/StatusBadge';
 import ItemForm from '../components/ItemForm';
@@ -43,14 +43,17 @@ function formatDate(dateString) {
  * ════════════════════════════════════════════════════════ */
 function ItemDetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [item, setItem] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [editing, setEditing] = useState(false);
   const [statusUpdating, setStatusUpdating] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [toast, setToast] = useState(null);
 
   const confirmDialog = useConfirmDialog();
+  const deleteDialog = useConfirmDialog();
 
   /* ── Fetch the item ────────────────────────────────── */
   const fetchItem = useCallback(async () => {
@@ -110,6 +113,51 @@ function ItemDetail() {
     confirmDialog.close();
   };
 
+  /* ── Delete handler ────────────────────────────────── */
+  const handleDelete = async () => {
+    if (!item) return;
+    setDeleting(true);
+
+    try {
+      /*
+       * If the item has a photo, delete it from the Supabase Storage bucket
+       * BEFORE deleting the DB row. We extract the storage file path by
+       * parsing the public URL — the path after '/item-photos/' is the
+       * key we need to pass to .remove().
+       */
+      if (item.imageurl) {
+        const marker = '/item-photos/';
+        const markerIndex = item.imageurl.indexOf(marker);
+        if (markerIndex !== -1) {
+          const filePath = decodeURIComponent(
+            item.imageurl.slice(markerIndex + marker.length),
+          );
+          // Best-effort delete — if this fails we still delete the DB row
+          await supabase.storage.from('item-photos').remove([filePath]);
+        }
+      }
+
+      // Delete the row from the items table
+      const { error: deleteError } = await supabase
+        .from('items')
+        .delete()
+        .eq('id', item.id);
+
+      if (deleteError) {
+        throw new Error(`Delete failed: ${deleteError.message}`);
+      }
+
+      // Navigate to home — the listing will refetch on mount so the
+      // deleted item won't appear without a manual refresh.
+      navigate('/');
+    } catch (err) {
+      console.error('Delete error:', err);
+      setToast({ type: 'error', message: err.message || 'Failed to delete item.' });
+      setDeleting(false);
+      deleteDialog.close();
+    }
+  };
+
   /* ── Edit success handler ──────────────────────────── */
   const handleEditSuccess = (updatedFields) => {
     // Merge updated fields into local item state so the detail view
@@ -144,7 +192,7 @@ function ItemDetail() {
         <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
       )}
 
-      {/* Confirm Dialog */}
+      {/* Confirm Dialog — status toggle */}
       {confirmDialog.isOpen && (
         <ConfirmDialog
           title={item?.status === 'claimed' ? 'Reopen this item?' : 'Mark as claimed?'}
@@ -158,6 +206,19 @@ function ItemDetail() {
           loading={statusUpdating}
           onConfirm={handleStatusToggle}
           onCancel={confirmDialog.close}
+        />
+      )}
+
+      {/* Confirm Dialog — delete */}
+      {deleteDialog.isOpen && (
+        <ConfirmDialog
+          title="Delete this item?"
+          message="This action is permanent and cannot be undone. The item and its photo will be removed from the board."
+          confirmText="Delete Permanently"
+          variant="danger"
+          loading={deleting}
+          onConfirm={handleDelete}
+          onCancel={deleteDialog.close}
         />
       )}
 
@@ -283,6 +344,15 @@ function ItemDetail() {
                       }`}
                   >
                     {item.status === 'claimed' ? '↩ Reopen' : '✓ Mark as Claimed'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={deleteDialog.open}
+                    className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-red-50
+                      px-4 py-2 text-sm font-semibold text-red-600
+                      transition-all duration-200 hover:bg-red-100"
+                  >
+                    🗑️ Delete
                   </button>
                 </div>
               </div>
