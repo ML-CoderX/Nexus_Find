@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import Toast from './Toast';
 
@@ -71,16 +71,45 @@ const EMPTY_FORM = {
 
 /* ════════════════════════════════════════════════════════
  * ItemForm Component
+ *
+ * CREATE vs EDIT MODE:
+ * This component serves double duty — it handles both creating new items
+ * and editing existing ones. The mode is determined by props:
+ *
+ *   • CREATE mode (default): No props needed. On submit, a new row is
+ *     INSERTed into the `items` table and the form resets.
+ *
+ *   • EDIT mode: Pass `itemId` (the UUID) and `initialData` (an object
+ *     matching EMPTY_FORM shape, pre-filled from the existing item).
+ *     Optionally pass `existingImageUrl` for the current photo.
+ *     On submit, the existing row is UPDATEd via `.update().eq('id', itemId)`.
+ *     After a successful update, `onEditSuccess(updatedFields)` is called
+ *     so the parent (ItemDetail) can refresh without a full page reload.
+ *
+ * The form fields, validation rules, and UI are identical in both modes.
+ * Only the submit handler and button labels differ.
  * ════════════════════════════════════════════════════════ */
-function ItemForm() {
-  const [formData, setFormData] = useState(EMPTY_FORM);
+function ItemForm({ itemId, initialData, existingImageUrl, onEditSuccess, onCancel }) {
+  const isEditMode = Boolean(itemId);
+
+  const [formData, setFormData] = useState(
+    initialData ? { ...EMPTY_FORM, ...initialData } : EMPTY_FORM,
+  );
   const [photoFile, setPhotoFile] = useState(null);
-  const [photoPreview, setPhotoPreview] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState(existingImageUrl || null);
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [toast, setToast] = useState(null);
 
   const fileInputRef = useRef(null);
+
+  /* In edit mode, sync form if initialData changes (e.g. parent refetches) */
+  useEffect(() => {
+    if (initialData) {
+      setFormData({ ...EMPTY_FORM, ...initialData });
+      setPhotoPreview(existingImageUrl || null);
+    }
+  }, [initialData, existingImageUrl]);
 
   /* ── Field change handler ──────────────────────────── */
   const handleChange = useCallback((e) => {
@@ -155,11 +184,10 @@ function ItemForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // 1. Validate
+    // 1. Validate (same rules for both create and edit)
     const validationErrors = validateForm(formData);
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
-      // Scroll the first error into view
       const firstKey = Object.keys(validationErrors)[0];
       document.getElementById(`field-${firstKey}`)?.scrollIntoView({
         behavior: 'smooth',
@@ -172,16 +200,16 @@ function ItemForm() {
     setErrors({});
 
     try {
-      // 2. Upload photo (if one was selected)
-      let imageurl = null;
+      // 2. Upload photo (if a NEW file was selected)
+      let imageurl = existingImageUrl || null;
       if (photoFile) {
         imageurl = await uploadPhoto(photoFile);
+      } else if (!photoPreview) {
+        // User removed the photo entirely
+        imageurl = null;
       }
 
-      // 3. Insert row into the `items` table
-      //    status defaults to 'open' and createdat defaults to now()
-      //    via the column defaults in the database schema.
-      const { error: insertError } = await supabase.from('items').insert({
+      const payload = {
         type: formData.type,
         title: formData.title.trim(),
         description: formData.description.trim(),
@@ -191,17 +219,32 @@ function ItemForm() {
         imageurl,
         reportername: formData.reportername.trim(),
         contactinfo: formData.contactinfo.trim(),
-        // status and createdat are set by DB defaults
-      });
+      };
 
-      if (insertError) throw new Error(`Database insert failed: ${insertError.message}`);
+      if (isEditMode) {
+        /* ── EDIT MODE: update the existing row ─────────── */
+        const { error: updateError } = await supabase
+          .from('items')
+          .update(payload)
+          .eq('id', itemId);
 
-      // 4. Success — show toast and reset form
-      setToast({ type: 'success', message: "Item reported successfully! It\u0027s now on the board." });
-      setFormData(EMPTY_FORM);
-      removePhoto();
+        if (updateError) throw new Error(`Update failed: ${updateError.message}`);
+
+        setToast({ type: 'success', message: 'Item updated successfully!' });
+
+        // Notify parent so it can refresh the detail view without a full reload
+        if (onEditSuccess) onEditSuccess({ ...payload, id: itemId });
+      } else {
+        /* ── CREATE MODE: insert a new row ──────────────── */
+        const { error: insertError } = await supabase.from('items').insert(payload);
+
+        if (insertError) throw new Error(`Database insert failed: ${insertError.message}`);
+
+        setToast({ type: 'success', message: "Item reported successfully! It\u0027s now on the board." });
+        setFormData(EMPTY_FORM);
+        removePhoto();
+      }
     } catch (err) {
-      // 5. Surface the error without crashing the form
       console.error('Submit error:', err);
       setToast({ type: 'error', message: err.message || 'Something went wrong. Please try again.' });
     } finally {
@@ -448,16 +491,27 @@ function ItemForm() {
           </div>
         </div>
 
-        {/* ── Submit ──────────────────────────────────── */}
+        {/* ── Submit / Cancel ────────────────────────── */}
         <div className="flex items-center justify-end gap-4 border-t border-gray-200 pt-6">
-          <button
-            type="button"
-            onClick={() => { setFormData(EMPTY_FORM); removePhoto(); setErrors({}); }}
-            className="btn-secondary"
-            disabled={submitting}
-          >
-            Clear
-          </button>
+          {isEditMode && onCancel ? (
+            <button
+              type="button"
+              onClick={onCancel}
+              className="btn-secondary"
+              disabled={submitting}
+            >
+              Cancel
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => { setFormData(EMPTY_FORM); removePhoto(); setErrors({}); }}
+              className="btn-secondary"
+              disabled={submitting}
+            >
+              Clear
+            </button>
+          )}
           <button
             type="submit"
             className="btn-primary"
@@ -466,10 +520,10 @@ function ItemForm() {
             {submitting ? (
               <>
                 <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" aria-hidden="true" />
-                Submitting…
+                {isEditMode ? 'Saving…' : 'Submitting…'}
               </>
             ) : (
-              '+ Post Item'
+              isEditMode ? 'Save Changes' : '+ Post Item'
             )}
           </button>
         </div>
