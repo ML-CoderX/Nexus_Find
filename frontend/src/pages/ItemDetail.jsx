@@ -274,7 +274,7 @@ function ItemDetail() {
             <p className="mt-1 text-sm text-red-600">{error}</p>
             <div className="mt-6 flex gap-3">
               <Link to="/" className="btn-secondary">Back to Board</Link>
-              <button type="button" onClick={fetchItem} className="btn-primary !bg-red-600 hover:!bg-red-700">
+              <button type="button" onClick={fetchItem} className="btn-primary !bg-red-600 hover:bg-red-700">
                 Try Again
               </button>
             </div>
@@ -325,7 +325,7 @@ function ItemDetail() {
                     {item.title}
                   </h1>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                   <button
                     type="button"
                     onClick={() => setEditing(true)}

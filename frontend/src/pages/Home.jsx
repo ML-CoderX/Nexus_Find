@@ -184,7 +184,7 @@ function Home() {
             <button
               type="button"
               onClick={refetch}
-              className="btn-primary mt-6 !bg-red-600 !hover:bg-red-700"
+              className="btn-primary mt-6 !bg-red-600 hover:bg-red-700"
             >
               Try Again
             </button>
