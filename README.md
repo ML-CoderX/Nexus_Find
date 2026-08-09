@@ -41,7 +41,8 @@ A web application that helps campus communities report, search for, and recover 
 ## Challenges Faced
 - i faced challenge in the website deployment and all the backend databasec with supabase image storage.
 
-
+## Improvement
+- we could use ai for better confirmation of received item so that the item which has been already found or given can be deleated from the database automatically, so we can save space or keep a written record of who took and when.
 
 
 
