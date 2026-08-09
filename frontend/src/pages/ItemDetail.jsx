@@ -5,6 +5,7 @@ import StatusBadge from '../components/StatusBadge';
 import ItemForm from '../components/ItemForm';
 import Toast from '../components/Toast';
 import ConfirmDialog, { useConfirmDialog } from '../components/ConfirmDialog';
+import ClaimModal from '../components/ClaimModal';
 
 /* ────────────────────────────────────────────────────────
  * TYPE STYLES
@@ -54,6 +55,7 @@ function ItemDetail() {
 
   const confirmDialog = useConfirmDialog();
   const deleteDialog = useConfirmDialog();
+  const [isClaimModalOpen, setIsClaimModalOpen] = useState(false);
 
   /* ── Fetch the item ────────────────────────────────── */
   const fetchItem = useCallback(async () => {
@@ -84,33 +86,33 @@ function ItemDetail() {
     fetchItem();
   }, [fetchItem]);
 
-  /* ── Status toggle (Claimed ↔ Open) ────────────────── */
-  const handleStatusToggle = async () => {
+  /* ── Reopen Item ─────────────────────────────────────── */
+  const handleReopen = async () => {
     if (!item) return;
     setStatusUpdating(true);
 
-    const newStatus = item.status === 'claimed' ? 'open' : 'claimed';
-
     const { error: updateError } = await supabase
       .from('items')
-      .update({ status: newStatus })
+      .update({ status: 'open', claimproofurl: null, claimedby: null })
       .eq('id', item.id);
 
     if (updateError) {
-      setToast({ type: 'error', message: `Status update failed: ${updateError.message}` });
+      setToast({ type: 'error', message: `Reopen failed: ${updateError.message}` });
     } else {
       // Update local state immediately — no full page reload needed
-      setItem((prev) => ({ ...prev, status: newStatus }));
-      setToast({
-        type: 'success',
-        message: newStatus === 'claimed'
-          ? 'Item marked as claimed!'
-          : 'Item reopened — it\'s back on the board.',
-      });
+      setItem((prev) => ({ ...prev, status: 'open', claimproofurl: null, claimedby: null }));
+      setToast({ type: 'success', message: 'Item reopened — it\'s back on the board.' });
     }
 
     setStatusUpdating(false);
     confirmDialog.close();
+  };
+
+  /* ── Claim Success ───────────────────────────────────── */
+  const handleClaimSuccess = (updatedData) => {
+    setItem((prev) => ({ ...prev, ...updatedData }));
+    setIsClaimModalOpen(false);
+    setToast({ type: 'success', message: 'Item successfully claimed and verified!' });
   };
 
   /* ── Delete handler ────────────────────────────────── */
@@ -192,20 +194,25 @@ function ItemDetail() {
         <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
       )}
 
-      {/* Confirm Dialog — status toggle */}
+      {/* Confirm Dialog — Reopen */}
       {confirmDialog.isOpen && (
         <ConfirmDialog
-          title={item?.status === 'claimed' ? 'Reopen this item?' : 'Mark as claimed?'}
-          message={
-            item?.status === 'claimed'
-              ? 'This will move the item back to "open" status on the board.'
-              : 'Are you sure this item has been claimed? It will no longer show as active.'
-          }
-          confirmText={item?.status === 'claimed' ? 'Reopen' : 'Mark as Claimed'}
-          variant={item?.status === 'claimed' ? 'default' : 'danger'}
+          title="Reopen this item?"
+          message="This will move the item back to 'open' status on the board and remove any claim verification."
+          confirmText="Reopen"
+          variant="default"
           loading={statusUpdating}
-          onConfirm={handleStatusToggle}
+          onConfirm={handleReopen}
           onCancel={confirmDialog.close}
+        />
+      )}
+
+      {/* Claim Modal */}
+      {isClaimModalOpen && (
+        <ClaimModal
+          itemId={item?.id}
+          onSuccess={handleClaimSuccess}
+          onCancel={() => setIsClaimModalOpen(false)}
         />
       )}
 
@@ -335,7 +342,7 @@ function ItemDetail() {
                   </button>
                   <button
                     type="button"
-                    onClick={confirmDialog.open}
+                    onClick={item.status === 'claimed' ? confirmDialog.open : () => setIsClaimModalOpen(true)}
                     className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold
                       transition-all duration-200
                       ${item.status === 'claimed'
@@ -423,6 +430,32 @@ function ItemDetail() {
                       </div>
                     </div>
                   </div>
+
+                  {/* Claim Verification Info */}
+                  {item.status === 'claimed' && item.claimproofurl && (
+                    <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-5">
+                      <div className="mb-3 flex items-center justify-between">
+                        <h3 className="text-xs font-semibold uppercase tracking-wider text-emerald-700">
+                          Claim Verification
+                        </h3>
+                        <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-emerald-600">
+                          <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          Verified
+                        </span>
+                      </div>
+                      <div className="flex gap-4">
+                        <figure className="h-16 w-16 shrink-0 overflow-hidden rounded-lg border border-emerald-200 bg-white">
+                          <img src={item.claimproofurl} alt="Claim proof" className="h-full w-full object-cover" />
+                        </figure>
+                        <div>
+                          <p className="text-xs text-emerald-600 mb-0.5">Claimed by</p>
+                          <p className="text-sm font-semibold text-emerald-900">{item.claimedby || 'Unknown'}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </article>
