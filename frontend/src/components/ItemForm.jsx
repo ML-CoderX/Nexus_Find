@@ -2,10 +2,7 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import Toast from './Toast';
 
-/* ────────────────────────────────────────────────────────
- * CATEGORY OPTIONS
- * Matches the category badges shown in the reference design.
- * ──────────────────────────────────────────────────────── */
+
 const CATEGORIES = [
   'Electronics',
   'Clothing',
@@ -17,13 +14,7 @@ const CATEGORIES = [
   'Other',
 ];
 
-/* ────────────────────────────────────────────────────────
- * VALIDATION HELPERS
- *
- * contactinfo must be EITHER a valid email OR a phone number.
- *   • Email:  standard user@domain.tld pattern
- *   • Phone:  7–15 digits, optional leading +, optional spaces/dashes
- * ──────────────────────────────────────────────────────── */
+
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_RE = /^\+?[\d\s\-()]{7,15}$/;
 
@@ -31,10 +22,7 @@ function isValidContact(value) {
   return EMAIL_RE.test(value) || PHONE_RE.test(value);
 }
 
-/**
- * Validates every field and returns an object of { fieldName: errorMessage }.
- * An empty object means the form is valid.
- */
+
 function validateForm(data) {
   const errors = {};
 
@@ -55,11 +43,9 @@ function validateForm(data) {
   return errors;
 }
 
-/* ────────────────────────────────────────────────────────
- * INITIAL FORM STATE
- * ──────────────────────────────────────────────────────── */
+
 const EMPTY_FORM = {
-  type: '',           // 'lost' | 'found'
+  type: '',
   title: '',
   description: '',
   category: '',
@@ -69,26 +55,6 @@ const EMPTY_FORM = {
   contactinfo: '',
 };
 
-/* ════════════════════════════════════════════════════════
- * ItemForm Component
- *
- * CREATE vs EDIT MODE:
- * This component serves double duty — it handles both creating new items
- * and editing existing ones. The mode is determined by props:
- *
- *   • CREATE mode (default): No props needed. On submit, a new row is
- *     INSERTed into the `items` table and the form resets.
- *
- *   • EDIT mode: Pass `itemId` (the UUID) and `initialData` (an object
- *     matching EMPTY_FORM shape, pre-filled from the existing item).
- *     Optionally pass `existingImageUrl` for the current photo.
- *     On submit, the existing row is UPDATEd via `.update().eq('id', itemId)`.
- *     After a successful update, `onEditSuccess(updatedFields)` is called
- *     so the parent (ItemDetail) can refresh without a full page reload.
- *
- * The form fields, validation rules, and UI are identical in both modes.
- * Only the submit handler and button labels differ.
- * ════════════════════════════════════════════════════════ */
 function ItemForm({ itemId, initialData, existingImageUrl, onEditSuccess, onCancel }) {
   const isEditMode = Boolean(itemId);
 
@@ -103,7 +69,7 @@ function ItemForm({ itemId, initialData, existingImageUrl, onEditSuccess, onCanc
 
   const fileInputRef = useRef(null);
 
-  /* In edit mode, sync form if initialData changes (e.g. parent refetches) */
+
   useEffect(() => {
     if (initialData) {
       setFormData({ ...EMPTY_FORM, ...initialData });
@@ -111,11 +77,10 @@ function ItemForm({ itemId, initialData, existingImageUrl, onEditSuccess, onCanc
     }
   }, [initialData, existingImageUrl]);
 
-  /* ── Field change handler ──────────────────────────── */
   const handleChange = useCallback((e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    // Clear the inline error for this field as the user types
+
     setErrors((prev) => {
       if (!prev[name]) return prev;
       const next = { ...prev };
@@ -124,7 +89,6 @@ function ItemForm({ itemId, initialData, existingImageUrl, onEditSuccess, onCanc
     });
   }, []);
 
-  /* ── Lost / Found toggle ───────────────────────────── */
   const handleTypeToggle = useCallback((type) => {
     setFormData((prev) => ({ ...prev, type }));
     setErrors((prev) => {
@@ -135,12 +99,11 @@ function ItemForm({ itemId, initialData, existingImageUrl, onEditSuccess, onCanc
     });
   }, []);
 
-  /* ── Photo picker ──────────────────────────────────── */
   const handlePhotoChange = useCallback((e) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setPhotoFile(file);
-    // Create an object URL for the local preview
+
     setPhotoPreview(URL.createObjectURL(file));
   }, []);
 
@@ -150,18 +113,7 @@ function ItemForm({ itemId, initialData, existingImageUrl, onEditSuccess, onCanc
     if (fileInputRef.current) fileInputRef.current.value = '';
   }, []);
 
-  /* ────────────────────────────────────────────────────
-   * IMAGE UPLOAD FLOW
-   *
-   * 1. Generate a unique filename using timestamp + random suffix
-   *    to avoid collisions in the shared public bucket.
-   * 2. Upload the file to the "item-photos" Supabase Storage bucket.
-   * 3. If the upload succeeds, call getPublicUrl() to build the
-   *    permanent public URL (works because the bucket is set to public).
-   * 4. Return that URL to be stored in the `imageurl` column.
-   *
-   * If no photo was selected, we simply skip and store null.
-   * ──────────────────────────────────────────────────── */
+
   async function uploadPhoto(file) {
     const ext = file.name.split('.').pop();
     const uniqueName = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
@@ -180,11 +132,10 @@ function ItemForm({ itemId, initialData, existingImageUrl, onEditSuccess, onCanc
     return data.publicUrl;
   }
 
-  /* ── Submit handler ────────────────────────────────── */
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // 1. Validate (same rules for both create and edit)
+
     const validationErrors = validateForm(formData);
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
@@ -200,12 +151,12 @@ function ItemForm({ itemId, initialData, existingImageUrl, onEditSuccess, onCanc
     setErrors({});
 
     try {
-      // 2. Upload photo (if a NEW file was selected)
+
       let imageurl = existingImageUrl || null;
       if (photoFile) {
         imageurl = await uploadPhoto(photoFile);
       } else if (!photoPreview) {
-        // User removed the photo entirely
+
         imageurl = null;
       }
 
@@ -222,7 +173,7 @@ function ItemForm({ itemId, initialData, existingImageUrl, onEditSuccess, onCanc
       };
 
       if (isEditMode) {
-        /* ── EDIT MODE: update the existing row ─────────── */
+
         const { error: updateError } = await supabase
           .from('items')
           .update(payload)
@@ -232,10 +183,10 @@ function ItemForm({ itemId, initialData, existingImageUrl, onEditSuccess, onCanc
 
         setToast({ type: 'success', message: 'Item updated successfully!' });
 
-        // Notify parent so it can refresh the detail view without a full reload
+
         if (onEditSuccess) onEditSuccess({ ...payload, id: itemId });
       } else {
-        /* ── CREATE MODE: insert a new row ──────────────── */
+
         const { error: insertError } = await supabase.from('items').insert(payload);
 
         if (insertError) throw new Error(`Database insert failed: ${insertError.message}`);
@@ -252,7 +203,6 @@ function ItemForm({ itemId, initialData, existingImageUrl, onEditSuccess, onCanc
     }
   };
 
-  /* ── Helper to render a field error ─────────────────── */
   const FieldError = ({ name }) => {
     if (!errors[name]) return null;
     return (
@@ -262,12 +212,10 @@ function ItemForm({ itemId, initialData, existingImageUrl, onEditSuccess, onCanc
     );
   };
 
-  /* ══════════════════════════════════════════════════════
-   * RENDER
-   * ══════════════════════════════════════════════════════ */
+
   return (
     <>
-      {/* Toast notification */}
+      { }
       {toast && (
         <Toast
           message={toast.message}
@@ -281,7 +229,7 @@ function ItemForm({ itemId, initialData, existingImageUrl, onEditSuccess, onCanc
         noValidate
         className="mx-auto max-w-2xl space-y-8"
       >
-        {/* ── Lost / Found Toggle ──────────────────────── */}
+        { }
         <fieldset id="field-type">
           <legend className="label-base">What happened?</legend>
           <div className="mt-1 flex gap-3">
@@ -307,7 +255,7 @@ function ItemForm({ itemId, initialData, existingImageUrl, onEditSuccess, onCanc
           <FieldError name="type" />
         </fieldset>
 
-        {/* ── Title ───────────────────────────────────── */}
+        { }
         <div id="field-title">
           <label htmlFor="title" className="label-base">
             Item Title <span className="text-red-500">*</span>
@@ -324,7 +272,7 @@ function ItemForm({ itemId, initialData, existingImageUrl, onEditSuccess, onCanc
           <FieldError name="title" />
         </div>
 
-        {/* ── Description ─────────────────────────────── */}
+        { }
         <div id="field-description">
           <label htmlFor="description" className="label-base">
             Description <span className="text-red-500">*</span>
@@ -341,7 +289,7 @@ function ItemForm({ itemId, initialData, existingImageUrl, onEditSuccess, onCanc
           <FieldError name="description" />
         </div>
 
-        {/* ── Category & Location (side-by-side) ──────── */}
+        { }
         <div className="grid gap-6 sm:grid-cols-2">
           <div id="field-category">
             <label htmlFor="category" className="label-base">
@@ -379,7 +327,7 @@ function ItemForm({ itemId, initialData, existingImageUrl, onEditSuccess, onCanc
           </div>
         </div>
 
-        {/* ── Date Lost / Found ──────────────────────── */}
+        { }
         <div id="field-datelostfound">
           <label htmlFor="datelostfound" className="label-base">
             Date Lost / Found <span className="text-red-500">*</span>
@@ -396,7 +344,7 @@ function ItemForm({ itemId, initialData, existingImageUrl, onEditSuccess, onCanc
           <FieldError name="datelostfound" />
         </div>
 
-        {/* ── Photo Upload ───────────────────────────── */}
+        { }
         <div id="field-photo">
           <span className="label-base">Photo (optional)</span>
           <div
@@ -451,7 +399,7 @@ function ItemForm({ itemId, initialData, existingImageUrl, onEditSuccess, onCanc
           </div>
         </div>
 
-        {/* ── Reporter Info ──────────────────────────── */}
+        { }
         <div className="rounded-xl border border-gray-200 bg-gray-50/50 p-6">
           <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-gray-500">
             Your Information
@@ -491,7 +439,7 @@ function ItemForm({ itemId, initialData, existingImageUrl, onEditSuccess, onCanc
           </div>
         </div>
 
-        {/* ── Submit / Cancel ────────────────────────── */}
+        { }
         <div className="flex items-center justify-end gap-4 border-t border-gray-200 pt-6">
           {isEditMode && onCancel ? (
             <button

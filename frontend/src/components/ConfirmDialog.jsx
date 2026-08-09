@@ -1,17 +1,6 @@
 import { useState, useCallback } from 'react';
 
-/**
- * ConfirmDialog — a modal overlay with a confirm/cancel choice.
- *
- * Props:
- *   title       – dialog heading
- *   message     – body text
- *   confirmText – label for the confirm button (default "Confirm")
- *   variant     – "danger" | "default" — controls confirm button color
- *   loading     – disables buttons and shows spinner while an action runs
- *   onConfirm   – callback when the user confirms
- *   onCancel    – callback when the user cancels / clicks backdrop
- */
+
 function ConfirmDialog({
   title,
   message,
@@ -74,10 +63,7 @@ function ConfirmDialog({
   );
 }
 
-/**
- * useConfirmDialog — convenience hook that manages open/close state
- * for a ConfirmDialog. Returns { isOpen, open, close, ConfirmDialogComponent }.
- */
+
 export function useConfirmDialog() {
   const [isOpen, setIsOpen] = useState(false);
   const open = useCallback(() => setIsOpen(true), []);

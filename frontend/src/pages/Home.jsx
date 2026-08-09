@@ -4,22 +4,16 @@ import useItems from '../hooks/useItems';
 import FilterBar from '../components/FilterBar';
 import ItemCard from '../components/ItemCard';
 
-/* ────────────────────────────────────────────────────────
- * DEFAULT FILTER STATE
- * All filters start empty (= show everything).
- * ──────────────────────────────────────────────────────── */
+
 const INITIAL_FILTERS = {
-  typeTab:  '',   // '' | 'lost' | 'found'
+  typeTab: '',
   category: '',
   location: '',
-  status:   '',
-  search:   '',
+  status: '',
+  search: '',
 };
 
-/* ────────────────────────────────────────────────────────
- * Skeleton card — shown during the loading state.
- * Mimics the shape of ItemCard for a polished feel.
- * ──────────────────────────────────────────────────────── */
+
 function SkeletonCard() {
   return (
     <div className="flex flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm animate-pulse">
@@ -44,26 +38,11 @@ function SkeletonCard() {
   );
 }
 
-/* ════════════════════════════════════════════════════════
- * Home Page
- * ════════════════════════════════════════════════════════ */
+
 function Home() {
   const { items, loading, error, refetch } = useItems();
   const [filters, setFilters] = useState(INITIAL_FILTERS);
 
-  /*
-   * FILTER-COMBINING LOGIC
-   *
-   * All active filters are ANDed together — an item must pass EVERY
-   * active filter to appear in the results. We chain .filter() calls
-   * for readability; for a small dataset this is negligible perf cost.
-   *
-   *   typeTab   → exact match on type
-   *   category  → exact match on category
-   *   location  → exact match on location
-   *   status    → exact match on status
-   *   search    → case-insensitive substring match on title OR description
-   */
   const filteredItems = useMemo(() => {
     let result = items;
 
@@ -93,7 +72,7 @@ function Home() {
 
   return (
     <div className="min-h-screen bg-surface">
-      {/* ── Header ─────────────────────────────────────── */}
+      { }
       <header className="bg-navy-900 text-white">
         <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3">
           <Link to="/" className="flex items-center gap-2">
@@ -106,7 +85,7 @@ function Home() {
             <div className="leading-tight">
               <p className="text-sm font-bold tracking-wide">CAMPUS LOST &amp; FOUND</p>
               <p className="text-[10px] uppercase tracking-widest text-gray-400">
-                Student Affairs · Item Recovery
+                Item Recovery
               </p>
             </div>
           </Link>
@@ -117,12 +96,9 @@ function Home() {
         </nav>
       </header>
 
-      {/* ── Hero section ───────────────────────────────── */}
+      { }
       <section className="border-b border-gray-200 bg-white px-6 py-10">
         <div className="mx-auto max-w-6xl">
-          <p className="text-xs font-semibold uppercase tracking-widest text-brand-600">
-            A Service of Student Affairs · Updated Daily
-          </p>
           <h1 className="mt-2 text-3xl font-extrabold text-gray-900 sm:text-4xl">
             Lost something<br />on campus?
           </h1>
@@ -133,16 +109,16 @@ function Home() {
         </div>
       </section>
 
-      {/* ── Filters + Board ────────────────────────────── */}
+      { }
       <main className="mx-auto max-w-6xl px-6 py-8">
-        {/* Filter bar */}
+        { }
         <FilterBar
           items={items}
           filters={filters}
           onChange={setFilters}
         />
 
-        {/* Result count + timestamp */}
+        { }
         <div className="mt-6 mb-4 flex items-center justify-between text-sm text-gray-500">
           <p>
             <span className="font-semibold text-brand-600">{filteredItems.length}</span>
@@ -163,7 +139,7 @@ function Home() {
           )}
         </div>
 
-        {/* ── Loading state: skeleton grid ──────────────── */}
+        { }
         {loading && (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {Array.from({ length: 8 }).map((_, i) => (
@@ -172,7 +148,7 @@ function Home() {
           </div>
         )}
 
-        {/* ── Error state ─────────────────────────────── */}
+        { }
         {!loading && error && (
           <div className="flex flex-col items-center justify-center rounded-2xl border border-red-200 bg-red-50 px-6 py-16 text-center">
             <svg className="mb-4 h-12 w-12 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
@@ -191,7 +167,7 @@ function Home() {
           </div>
         )}
 
-        {/* ── Empty state ─────────────────────────────── */}
+        { }
         {!loading && !error && filteredItems.length === 0 && (
           <div className="flex flex-col items-center justify-center rounded-2xl border border-gray-200 bg-white px-6 py-16 text-center">
             <svg className="mb-4 h-12 w-12 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
@@ -212,7 +188,7 @@ function Home() {
           </div>
         )}
 
-        {/* ── Items grid ──────────────────────────────── */}
+        { }
         {!loading && !error && filteredItems.length > 0 && (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {filteredItems.map((item) => (

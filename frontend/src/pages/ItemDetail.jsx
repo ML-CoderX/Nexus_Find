@@ -7,18 +7,13 @@ import Toast from '../components/Toast';
 import ConfirmDialog, { useConfirmDialog } from '../components/ConfirmDialog';
 import ClaimModal from '../components/ClaimModal';
 
-/* ────────────────────────────────────────────────────────
- * TYPE STYLES
- * Same color system as ItemCard for visual consistency.
- * ──────────────────────────────────────────────────────── */
+
 const TYPE_STYLES = {
-  lost:  { label: 'Lost Item',  color: 'text-red-600',  bg: 'bg-red-50',  border: 'border-red-200' },
+  lost: { label: 'Lost Item', color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-200' },
   found: { label: 'Found Item', color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-200' },
 };
 
-/**
- * Formats a date string to a readable format.
- */
+
 function formatDate(dateString) {
   if (!dateString) return '—';
   return new Date(dateString).toLocaleDateString('en-US', {
@@ -29,19 +24,7 @@ function formatDate(dateString) {
   });
 }
 
-/* ════════════════════════════════════════════════════════
- * ItemDetail Page
- *
- * Fetches a single item by ID and renders the full detail view.
- * Includes:
- *   - Full photo display
- *   - All item fields with labels
- *   - StatusBadge (open/claimed)
- *   - "Mark as Claimed" / "Reopen" toggle with confirm dialog
- *   - "Edit" mode that swaps the detail view for the ItemForm
- *     (reused in edit mode with pre-filled data)
- *   - Loading, error, and not-found states
- * ════════════════════════════════════════════════════════ */
+
 function ItemDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -57,7 +40,7 @@ function ItemDetail() {
   const deleteDialog = useConfirmDialog();
   const [isClaimModalOpen, setIsClaimModalOpen] = useState(false);
 
-  /* ── Fetch the item ────────────────────────────────── */
+
   const fetchItem = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -86,7 +69,6 @@ function ItemDetail() {
     fetchItem();
   }, [fetchItem]);
 
-  /* ── Reopen Item ─────────────────────────────────────── */
   const handleReopen = async () => {
     if (!item) return;
     setStatusUpdating(true);
@@ -99,7 +81,7 @@ function ItemDetail() {
     if (updateError) {
       setToast({ type: 'error', message: `Reopen failed: ${updateError.message}` });
     } else {
-      // Update local state immediately — no full page reload needed
+
       setItem((prev) => ({ ...prev, status: 'open', claimproofurl: null, claimedby: null }));
       setToast({ type: 'success', message: 'Item reopened — it\'s back on the board.' });
     }
@@ -108,25 +90,19 @@ function ItemDetail() {
     confirmDialog.close();
   };
 
-  /* ── Claim Success ───────────────────────────────────── */
+
   const handleClaimSuccess = (updatedData) => {
     setItem((prev) => ({ ...prev, ...updatedData }));
     setIsClaimModalOpen(false);
     setToast({ type: 'success', message: 'Item successfully claimed and verified!' });
   };
 
-  /* ── Delete handler ────────────────────────────────── */
   const handleDelete = async () => {
     if (!item) return;
     setDeleting(true);
 
     try {
-      /*
-       * If the item has a photo, delete it from the Supabase Storage bucket
-       * BEFORE deleting the DB row. We extract the storage file path by
-       * parsing the public URL — the path after '/item-photos/' is the
-       * key we need to pass to .remove().
-       */
+
       if (item.imageurl) {
         const marker = '/item-photos/';
         const markerIndex = item.imageurl.indexOf(marker);
@@ -134,12 +110,12 @@ function ItemDetail() {
           const filePath = decodeURIComponent(
             item.imageurl.slice(markerIndex + marker.length),
           );
-          // Best-effort delete — if this fails we still delete the DB row
+
           await supabase.storage.from('item-photos').remove([filePath]);
         }
       }
 
-      // Delete the row from the items table
+
       const { error: deleteError } = await supabase
         .from('items')
         .delete()
@@ -149,8 +125,7 @@ function ItemDetail() {
         throw new Error(`Delete failed: ${deleteError.message}`);
       }
 
-      // Navigate to home — the listing will refetch on mount so the
-      // deleted item won't appear without a manual refresh.
+
       navigate('/');
     } catch (err) {
       console.error('Delete error:', err);
@@ -160,41 +135,38 @@ function ItemDetail() {
     }
   };
 
-  /* ── Edit success handler ──────────────────────────── */
+
   const handleEditSuccess = (updatedFields) => {
-    // Merge updated fields into local item state so the detail view
-    // reflects changes immediately without refetching from DB.
+
     setItem((prev) => ({ ...prev, ...updatedFields }));
     setEditing(false);
   };
 
-  /* ── Build form initial data from the current item ──── */
+
   const formInitialData = item
     ? {
-        type: item.type,
-        title: item.title,
-        description: item.description,
-        category: item.category,
-        location: item.location,
-        datelostfound: item.datelostfound,
-        reportername: item.reportername,
-        contactinfo: item.contactinfo,
-      }
+      type: item.type,
+      title: item.title,
+      description: item.description,
+      category: item.category,
+      location: item.location,
+      datelostfound: item.datelostfound,
+      reportername: item.reportername,
+      contactinfo: item.contactinfo,
+    }
     : null;
 
   const typeStyle = TYPE_STYLES[item?.type] || TYPE_STYLES.lost;
 
-  /* ══════════════════════════════════════════════════════
-   * RENDER
-   * ══════════════════════════════════════════════════════ */
+
   return (
     <div className="min-h-screen bg-surface">
-      {/* Toast */}
+      { }
       {toast && (
         <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
       )}
 
-      {/* Confirm Dialog — Reopen */}
+      { }
       {confirmDialog.isOpen && (
         <ConfirmDialog
           title="Reopen this item?"
@@ -207,7 +179,7 @@ function ItemDetail() {
         />
       )}
 
-      {/* Claim Modal */}
+      { }
       {isClaimModalOpen && (
         <ClaimModal
           itemId={item?.id}
@@ -216,7 +188,7 @@ function ItemDetail() {
         />
       )}
 
-      {/* Confirm Dialog — delete */}
+      { }
       {deleteDialog.isOpen && (
         <ConfirmDialog
           title="Delete this item?"
@@ -229,7 +201,7 @@ function ItemDetail() {
         />
       )}
 
-      {/* ── Header ─────────────────────────────────────── */}
+      { }
       <header className="bg-navy-900 text-white">
         <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3">
           <Link to="/" className="flex items-center gap-2">
@@ -257,10 +229,10 @@ function ItemDetail() {
         </nav>
       </header>
 
-      {/* ── Content ────────────────────────────────────── */}
+      { }
       <main className="mx-auto max-w-6xl px-6 py-8">
 
-        {/* ── Loading state ──────────────────────────── */}
+        { }
         {loading && (
           <div className="flex flex-col items-center justify-center py-24">
             <span className="mb-4 inline-block h-10 w-10 animate-spin rounded-full border-4 border-brand-500 border-t-transparent" aria-label="Loading" />
@@ -268,7 +240,7 @@ function ItemDetail() {
           </div>
         )}
 
-        {/* ── Error / Not found state ────────────────── */}
+        { }
         {!loading && error && (
           <div className="flex flex-col items-center justify-center rounded-2xl border border-red-200 bg-red-50 px-6 py-16 text-center">
             <svg className="mb-4 h-12 w-12 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
@@ -288,10 +260,10 @@ function ItemDetail() {
           </div>
         )}
 
-        {/* ── Detail / Edit view ─────────────────────── */}
+        { }
         {!loading && !error && item && (
           editing ? (
-            /* ── EDIT MODE: reuse ItemForm pre-filled with item data ── */
+
             <section>
               <div className="mb-6">
                 <p className="text-xs font-semibold uppercase tracking-widest text-brand-600">
@@ -302,14 +274,7 @@ function ItemDetail() {
                 </h1>
               </div>
               <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-10">
-                {/*
-                  REUSE EXPLANATION:
-                  ItemForm receives `itemId` and `initialData` to switch into edit mode.
-                  The same validation, fields, and photo upload logic apply — only the
-                  submit handler uses `.update()` instead of `.insert()`.
-                  `onEditSuccess` merges the updated fields into our local state so the
-                  detail view reflects changes immediately.
-                */}
+                { }
                 <ItemForm
                   itemId={item.id}
                   initialData={formInitialData}
@@ -320,9 +285,9 @@ function ItemDetail() {
               </div>
             </section>
           ) : (
-            /* ── DETAIL VIEW ─────────────────────────────── */
+
             <article>
-              {/* Breadcrumb + actions row */}
+              { }
               <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-widest text-brand-600">
@@ -365,7 +330,7 @@ function ItemDetail() {
               </div>
 
               <div className="grid gap-8 lg:grid-cols-5">
-                {/* ── Left column: Photo ──────────────── */}
+                { }
                 <div className="lg:col-span-2">
                   {item.imageurl ? (
                     <figure className="overflow-hidden rounded-2xl border border-gray-200 bg-gray-100">
@@ -385,9 +350,9 @@ function ItemDetail() {
                   )}
                 </div>
 
-                {/* ── Right column: Fields ────────────── */}
+                { }
                 <div className="lg:col-span-3 space-y-6">
-                  {/* Type + Status row */}
+                  { }
                   <div className="flex items-center gap-3">
                     <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wider ${typeStyle.bg} ${typeStyle.color} ${typeStyle.border} border`}>
                       {typeStyle.label}
@@ -395,13 +360,13 @@ function ItemDetail() {
                     <StatusBadge status={item.status} />
                   </div>
 
-                  {/* Description */}
+                  { }
                   <div>
                     <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">Description</h3>
                     <p className="text-sm leading-relaxed text-gray-700">{item.description}</p>
                   </div>
 
-                  {/* Info grid */}
+                  { }
                   <div className="grid gap-4 sm:grid-cols-2">
                     <InfoField icon="📂" label="Category" value={item.category} />
                     <InfoField icon="📍" label="Location" value={item.location} />
@@ -409,7 +374,7 @@ function ItemDetail() {
                     <InfoField icon="🕐" label="Posted" value={formatDate(item.createdat)} />
                   </div>
 
-                  {/* Reporter info */}
+                  { }
                   <div className="rounded-xl border border-gray-200 bg-gray-50/50 p-5">
                     <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-400">
                       Reported By
@@ -431,7 +396,7 @@ function ItemDetail() {
                     </div>
                   </div>
 
-                  {/* Claim Verification Info */}
+                  { }
                   {item.status === 'claimed' && item.claimproofurl && (
                     <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-5">
                       <div className="mb-3 flex items-center justify-between">
@@ -466,9 +431,7 @@ function ItemDetail() {
   );
 }
 
-/**
- * InfoField — a small label + value pair with an icon.
- */
+
 function InfoField({ icon, label, value }) {
   return (
     <div className="rounded-lg border border-gray-100 bg-white p-3">

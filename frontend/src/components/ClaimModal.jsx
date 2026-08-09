@@ -1,26 +1,7 @@
 import { useState, useRef, useCallback } from 'react';
 import { supabase } from '../supabaseClient';
 
-/**
- * ClaimModal — a modal that requires photo proof before an item can be
- * marked as claimed. This prevents anyone from casually removing items
- * from the board without accountability.
- *
- * Flow:
- *   1. User clicks "Mark as Claimed" on the detail page
- *   2. This modal opens, asking for:
- *      - A proof photo (e.g. the item in their possession)
- *      - Their name (who is claiming it)
- *   3. On submit:
- *      a. Upload the proof photo to Supabase Storage (claims/ prefix)
- *      b. Update the item row: status → 'claimed', claimproofurl, claimedby
- *   4. Parent receives the updated fields via onSuccess callback
- *
- * Props:
- *   itemId    – the UUID of the item being claimed
- *   onSuccess – callback({ status, claimproofurl, claimedby }) on success
- *   onCancel  – callback to close the modal without claiming
- */
+
 function ClaimModal({ itemId, onSuccess, onCancel }) {
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
@@ -29,7 +10,7 @@ function ClaimModal({ itemId, onSuccess, onCancel }) {
   const [error, setError] = useState(null);
   const fileInputRef = useRef(null);
 
-  /* ── Photo picker ──────────────────────────────────── */
+
   const handlePhotoChange = useCallback((e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -44,9 +25,9 @@ function ClaimModal({ itemId, onSuccess, onCancel }) {
     if (fileInputRef.current) fileInputRef.current.value = '';
   }, []);
 
-  /* ── Submit: upload proof photo → update DB row ────── */
+
   const handleSubmit = async () => {
-    // Validate
+
     if (!photoFile) {
       setError('A verification photo is required to claim this item.');
       return;
@@ -60,10 +41,7 @@ function ClaimModal({ itemId, onSuccess, onCancel }) {
     setError(null);
 
     try {
-      /*
-       * Upload the proof photo to the 'item-photos' bucket under a
-       * 'claims/' prefix to keep claim proofs separate from item photos.
-       */
+
       const ext = photoFile.name.split('.').pop();
       const uniqueName = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
       const filePath = `claims/${uniqueName}`;
@@ -82,7 +60,7 @@ function ClaimModal({ itemId, onSuccess, onCancel }) {
 
       const claimproofurl = urlData.publicUrl;
 
-      // Update the item row with claim data
+
       const { error: updateError } = await supabase
         .from('items')
         .update({
@@ -96,7 +74,7 @@ function ClaimModal({ itemId, onSuccess, onCancel }) {
         throw new Error(`Claim update failed: ${updateError.message}`);
       }
 
-      // Notify parent so it can update local state without a full reload
+
       onSuccess({
         status: 'claimed',
         claimproofurl,
@@ -109,9 +87,7 @@ function ClaimModal({ itemId, onSuccess, onCancel }) {
     }
   };
 
-  /* ══════════════════════════════════════════════════════
-   * RENDER
-   * ══════════════════════════════════════════════════════ */
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
@@ -124,7 +100,7 @@ function ClaimModal({ itemId, onSuccess, onCancel }) {
         className="w-full max-w-lg rounded-2xl bg-white shadow-xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* ── Header ─────────────────────────────────── */}
+        { }
         <div className="bg-gradient-to-r from-emerald-500 to-teal-500 px-6 py-4">
           <h2 id="claim-modal-title" className="text-lg font-bold text-white">
             📸 Verify Your Claim
@@ -134,9 +110,9 @@ function ClaimModal({ itemId, onSuccess, onCancel }) {
           </p>
         </div>
 
-        {/* ── Body ───────────────────────────────────── */}
+        { }
         <div className="space-y-5 p-6">
-          {/* Why we need this */}
+          { }
           <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
             <p className="text-xs text-amber-800">
               <span className="font-semibold">Why is this needed?</span>{' '}
@@ -145,7 +121,7 @@ function ClaimModal({ itemId, onSuccess, onCancel }) {
             </p>
           </div>
 
-          {/* Photo upload */}
+          { }
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">
               Proof Photo <span className="text-red-500">*</span>
@@ -205,7 +181,7 @@ function ClaimModal({ itemId, onSuccess, onCancel }) {
             </div>
           </div>
 
-          {/* Claimer name */}
+          { }
           <div>
             <label htmlFor="claimed-by" className="mb-1 block text-sm font-medium text-gray-700">
               Your Name <span className="text-red-500">*</span>
@@ -220,7 +196,7 @@ function ClaimModal({ itemId, onSuccess, onCancel }) {
             />
           </div>
 
-          {/* Error message */}
+          { }
           {error && (
             <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3">
               <p className="text-sm text-red-700">{error}</p>
@@ -228,7 +204,7 @@ function ClaimModal({ itemId, onSuccess, onCancel }) {
           )}
         </div>
 
-        {/* ── Footer ─────────────────────────────────── */}
+        { }
         <div className="flex items-center justify-end gap-3 border-t border-gray-200 bg-gray-50 px-6 py-4">
           <button
             type="button"

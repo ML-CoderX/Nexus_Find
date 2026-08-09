@@ -1,9 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 
-/* ────────────────────────────────────────────────────────
- * CATEGORY LIST
- * Must stay in sync with the categories in ItemForm.jsx.
- * ──────────────────────────────────────────────────────── */
+
 const CATEGORIES = [
   'Electronics',
   'Clothing',
@@ -15,60 +12,29 @@ const CATEGORIES = [
   'Other',
 ];
 
-/**
- * FilterBar — provides all filter controls for the board.
- *
- * Props:
- *   items     – the full unfiltered array from useItems()
- *   filters   – current filter state object
- *   onChange  – callback receiving the updated filter state
- *
- * FILTER-COMBINING LOGIC (applied in the Home page):
- * All active filters are ANDed together. Each filter narrows the set:
- *   1. typeTab   → exact match on item.type ('lost' | 'found' | '' for all)
- *   2. category  → exact match on item.category (or '' for all)
- *   3. location  → exact match on item.location (or '' for all)
- *   4. status    → exact match on item.status (or '' for all)
- *   5. search    → case-insensitive substring match against title + description
- *
- * The search input is debounced (see below) so we don't re-filter on every
- * keystroke — instead we wait 300ms after the user stops typing.
- */
+
 function FilterBar({ items, filters, onChange }) {
-  /* ── Local search state for debounce ──────────────── */
+
   const [searchInput, setSearchInput] = useState(filters.search || '');
   const debounceRef = useRef(null);
 
-  /*
-   * DEBOUNCE LOGIC
-   * Instead of updating filters.search on every keystroke, we buffer the
-   * raw input in local state and only propagate to the parent after 300ms
-   * of inactivity. This prevents expensive re-filtering from running on
-   * every character typed.
-   *
-   * How it works:
-   *   1. On each keystroke, clear any pending timer and start a new 300ms timer.
-   *   2. When the timer fires, call onChange with the latest search value.
-   *   3. On unmount, clear the timer to prevent memory leaks.
-   */
+
   useEffect(() => {
     clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
       onChange({ ...filters, search: searchInput });
     }, 300);
     return () => clearTimeout(debounceRef.current);
-    // We intentionally exclude `filters` and `onChange` from deps
-    // to avoid an infinite loop — we only want to react to searchInput changes.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, [searchInput]);
 
-  /* ── Derive unique locations from the data for the dropdown ── */
+
   const uniqueLocations = useMemo(() => {
     const set = new Set(items.map((i) => i.location).filter(Boolean));
     return [...set].sort();
   }, [items]);
 
-  /* ── Helpers ──────────────────────────────────────── */
+
   const setFilter = (key, value) => {
     onChange({ ...filters, [key]: value });
   };
@@ -81,18 +47,18 @@ function FilterBar({ items, filters, onChange }) {
   const hasActiveFilters =
     filters.typeTab || filters.category || filters.location || filters.status || filters.search;
 
-  /* ── Tab style helper ─────────────────────────────── */
+
   const tabClass = (value) =>
     `px-4 py-2 text-sm font-semibold transition-colors duration-150 rounded-lg
      ${filters.typeTab === value
-       ? 'bg-navy-900 text-white'
-       : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'}`;
+      ? 'bg-navy-900 text-white'
+      : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'}`;
 
   return (
     <div className="space-y-4">
-      {/* ── Row 1: Search + Type Tabs ───────────────── */}
+      { }
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        {/* Search */}
+        { }
         <div className="relative flex-1 sm:max-w-md">
           <svg
             className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
@@ -111,7 +77,7 @@ function FilterBar({ items, filters, onChange }) {
           />
         </div>
 
-        {/* Type tabs */}
+        { }
         <nav className="flex gap-1 rounded-lg bg-gray-100 p-1" aria-label="Filter by type">
           <button type="button" onClick={() => setFilter('typeTab', '')} className={tabClass('')}>
             All Items
@@ -125,9 +91,9 @@ function FilterBar({ items, filters, onChange }) {
         </nav>
       </div>
 
-      {/* ── Row 2: Dropdown filters + Clear ─────────── */}
+      { }
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-        {/* Filter icon */}
+        { }
         <div className="hidden sm:flex sm:items-center sm:gap-1 sm:self-end sm:pb-2">
           <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
@@ -135,7 +101,7 @@ function FilterBar({ items, filters, onChange }) {
           </svg>
         </div>
 
-        {/* Category */}
+        { }
         <div className="flex-1">
           <label htmlFor="filter-category" className="mb-1 block text-xs font-medium text-gray-500">
             Category
@@ -153,7 +119,7 @@ function FilterBar({ items, filters, onChange }) {
           </select>
         </div>
 
-        {/* Location */}
+        { }
         <div className="flex-1">
           <label htmlFor="filter-location" className="mb-1 block text-xs font-medium text-gray-500">
             Location
@@ -171,7 +137,7 @@ function FilterBar({ items, filters, onChange }) {
           </select>
         </div>
 
-        {/* Status */}
+        { }
         <div className="flex-1">
           <label htmlFor="filter-status" className="mb-1 block text-xs font-medium text-gray-500">
             Status
@@ -188,7 +154,7 @@ function FilterBar({ items, filters, onChange }) {
           </select>
         </div>
 
-        {/* Clear filters */}
+        { }
         {hasActiveFilters && (
           <button
             type="button"

@@ -1,9 +1,7 @@
 import { Link } from 'react-router-dom';
 import StatusBadge from './StatusBadge';
 
-/**
- * Computes a human-friendly relative time string like "2h ago" or "3d ago".
- */
+
 function timeAgo(dateString) {
   const now = Date.now();
   const then = new Date(dateString).getTime();
@@ -18,33 +16,21 @@ function timeAgo(dateString) {
   return new Date(dateString).toLocaleDateString();
 }
 
-/**
- * Color-coded top accent bar and type label based on lost vs found.
- * Lost  = red tones   (urgent "help me find it" feel)
- * Found = blue tones  (calm "I have it" feel)
- */
+
 const TYPE_STYLES = {
   lost: {
-    bar:   'bg-gradient-to-r from-red-400 to-red-500',
+    bar: 'bg-gradient-to-r from-red-400 to-red-500',
     label: 'text-red-600',
-    bg:    'bg-red-50',
+    bg: 'bg-red-50',
   },
   found: {
-    bar:   'bg-gradient-to-r from-blue-400 to-blue-500',
+    bar: 'bg-gradient-to-r from-blue-400 to-blue-500',
     label: 'text-blue-600',
-    bg:    'bg-blue-50',
+    bg: 'bg-blue-50',
   },
 };
 
-/**
- * ItemCard — displays a single item in the board grid.
- *
- * Renders: color-coded accent bar, thumbnail (or placeholder),
- * category badge, type label, title, description snippet,
- * location, time ago, and status badge.
- *
- * The entire card is a clickable link to /item/:id.
- */
+
 function ItemCard({ item }) {
   const typeStyle = TYPE_STYLES[item.type] || TYPE_STYLES.lost;
 
@@ -56,7 +42,7 @@ function ItemCard({ item }) {
         hover:-translate-y-0.5 hover:shadow-md"
       aria-label={`View details for ${item.title}`}
     >
-      {/* ── Color accent bar + category badge ──────────── */}
+      { }
       <div className={`relative h-2 ${typeStyle.bar}`}>
         {item.category && (
           <span
@@ -68,7 +54,7 @@ function ItemCard({ item }) {
         )}
       </div>
 
-      {/* ── Thumbnail ────────────────────────────────── */}
+      { }
       {item.imageurl ? (
         <figure className="relative h-40 w-full overflow-hidden bg-gray-100">
           <img
@@ -80,7 +66,7 @@ function ItemCard({ item }) {
           />
         </figure>
       ) : (
-        /* Placeholder when no image — shows an icon on a tinted background */
+
         <figure className={`flex h-28 items-center justify-center ${typeStyle.bg}`}>
           <svg className="h-10 w-10 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
@@ -89,9 +75,9 @@ function ItemCard({ item }) {
         </figure>
       )}
 
-      {/* ── Card body ────────────────────────────────── */}
+      { }
       <div className="flex flex-1 flex-col gap-2 p-4">
-        {/* Type label + status */}
+        { }
         <div className="flex items-center justify-between">
           <span className={`text-xs font-bold uppercase tracking-wider ${typeStyle.label}`}>
             {item.type === 'lost' ? 'Lost Item' : 'Found Item'}
@@ -99,17 +85,17 @@ function ItemCard({ item }) {
           <StatusBadge status={item.status} />
         </div>
 
-        {/* Title */}
+        { }
         <h3 className="text-sm font-bold text-gray-900 line-clamp-1 group-hover:text-brand-600 transition-colors">
           {item.title}
         </h3>
 
-        {/* Description snippet */}
+        { }
         <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed">
           {item.description}
         </p>
 
-        {/* Meta row — location + time */}
+        { }
         <div className="mt-auto flex items-center gap-4 border-t border-gray-100 pt-3 text-[11px] text-gray-400">
           <span className="flex min-w-0 items-center gap-1">
             <svg className="h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">

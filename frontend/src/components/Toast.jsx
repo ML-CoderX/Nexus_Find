@@ -1,13 +1,6 @@
 import { useEffect, useState } from 'react';
 
-/**
- * Toast notification component.
- * Renders a dismissible banner at the top-right of the viewport.
- * Auto-hides after `duration` ms. Respects prefers-reduced-motion
- * via the CSS layer (animations collapse to 0ms).
- *
- * @param {{ message: string, type: 'success'|'error', onClose: () => void, duration?: number }} props
- */
+
 function Toast({ message, type = 'success', onClose, duration = 5000 }) {
   const [visible, setVisible] = useState(true);
 

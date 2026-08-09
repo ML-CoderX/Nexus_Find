@@ -1,15 +1,11 @@
 import { Link } from 'react-router-dom';
 import ItemForm from '../components/ItemForm';
 
-/**
- * "Report an Item" page.
- * Wraps the ItemForm in a page-level layout matching the reference
- * design's header bar and content area.
- */
+
 function ReportItem() {
   return (
     <div className="min-h-screen bg-surface">
-      {/* ── Top Header Bar ───────────────────────────── */}
+      { }
       <header className="bg-navy-900 text-white">
         <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3">
           <Link to="/" className="flex items-center gap-2">
@@ -37,7 +33,7 @@ function ReportItem() {
         </nav>
       </header>
 
-      {/* ── Page Content ─────────────────────────────── */}
+      { }
       <main className="mx-auto max-w-6xl px-6 py-12">
         <section className="mb-10">
           <p className="text-xs font-semibold uppercase tracking-widest text-brand-600">
